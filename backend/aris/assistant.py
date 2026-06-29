@@ -31,14 +31,17 @@ class AssistantEngine:
         self._orchestrator = orchestrator
         self.memory = memory
 
-    def handle_text(self, text: str) -> str:
-        """Processa um comando em texto e registra a interação na memória."""
-        # Em Fase 0 sem voz, speak/listen são no-ops; skills de diálogo entram no Plano 2.
-        ctx = Context(speak=lambda _t: None, listen=lambda **_k: "")
+    def process(self, text: str, ctx: Context) -> str:
+        """Processa um comando com um contexto dado (voz fornece speak/listen reais)."""
         ctx.private_mode = self.memory.private_mode
         resposta = self._orchestrator.process(text, ctx)
         self.memory.registrar(text, resposta)
         return resposta
+
+    def handle_text(self, text: str) -> str:
+        """Processa um comando de texto (sem voz: speak/listen são no-ops)."""
+        ctx = Context(speak=lambda _t: None, listen=lambda **_k: "")
+        return self.process(text, ctx)
 
 
 def build_engine(settings: Settings) -> AssistantEngine:

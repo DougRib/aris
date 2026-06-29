@@ -42,6 +42,21 @@ class Settings(BaseSettings):
         "msedge.exe,msedgewebview2.exe,chrome.exe,brave.exe,opera.exe,firefox.exe"
     )
 
+    # Voz — reconhecimento (STT)
+    idioma_stt: str = "pt-BR"
+
+    # Voz — síntese (TTS)
+    tts_engine: str = "edge"  # "edge" | "pyttsx3"
+    edge_tts_voice: str = "pt-BR-AntonioNeural"
+    edge_tts_rate: str = "+0%"
+    edge_tts_pitch: str = "+0Hz"
+    edge_tts_volume: str = "+0%"
+    # Eco/reverb opcional (0 = desligado)
+    edge_tts_echo_delay_ms: int = 0
+    edge_tts_echo_volume: int = 0
+    edge_tts_echo2_delay_ms: int = 0
+    edge_tts_echo2_volume: int = 0
+
     # Memória e notas
     max_memoria: int = 20
     arquivo_memoria: Path = BACKEND_DIR / "data" / "memoria.json"
