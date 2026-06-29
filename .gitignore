@@ -1,0 +1,36 @@
+# === Ambiente / segredos ===
+.env
+.env.*
+!.env.example
+
+# === Python ===
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# === Dados de runtime do ARIS ===
+# memória, notas, logs e áudios TTS são gerados em execução
+data/
+
+# === Frontend / Node (Fase 0) ===
+node_modules/
+dist/
+build/
+.vite/
+*.local
+
+# === IDE / SO ===
+.claude/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
