@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+/* Design tokens do HUD (ver docs/design/hud-tokens.md). No Tailwind v4 cada
+   token vira utilitário: bg-bg, text-primary, border-edge, etc. */
+@theme {
+  --color-bg: #07121b;
+  --color-panel: #0b1d2a;
+  --color-panel-inner: #0a1724;
+  --color-edge: #123243;
+  --color-grid: #0c2333;
+  --color-trace: #143a55;
+  --color-trace-dim: #0d2a3d;
+  --color-neon-core: #06121d;
+  --color-primary: #2fd2ff;
+  --color-primary-glow: #7be7ff;
+  --color-content: #e6f2ef;
+  --color-muted: #91a6b8;
+  --color-danger: #ff5c5c;
+  --color-warning: #ffc857;
+  --color-success: #3dff9e;
+  --color-user-line: #9fe870;
+
+  --font-display: "Segoe UI", system-ui, sans-serif;
+  --font-mono: "Cascadia Code", ui-monospace, monospace;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-content);
+  font-family: var(--font-display);
+}
+
+/* Anel pulsante quando o ARIS fala */
+@keyframes aris-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.07);
+    opacity: 1;
+  }
+}
+
+/* Rotação dos arcos */
+@keyframes aris-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -35,5 +35,6 @@ build/
 .DS_Store
 Thumbs.db
 
-# === Scratch de processo (subagent-driven / planos) ===
+# === Scratch de processo (subagent-driven / planos / browser) ===
 .superpowers/
+.playwright-mcp/
