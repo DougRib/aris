@@ -4,94 +4,101 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What is ARIS
 
-ARIS is a Portuguese-language voice assistant desktop app for Windows. It uses a Tkinter GUI, speech recognition (Google Speech API via `SpeechRecognition`), and two TTS backends: `edge-tts` (online, preferred) and `pyttsx3` (offline fallback). Responses are always in Brazilian Portuguese and addressed to "senhor".
+ARIS is a Brazilian-Portuguese voice assistant ("JARVIS"-style). It is being rebuilt from a
+Tkinter monolith into a **headless Python backend** (FastAPI + WebSocket) plus a future
+**React frontend** (the futuristic HUD). The brain — skills, LLM, memory, voice — runs headless;
+any client connects over a single WebSocket. Responses are always in PT-BR, addressed to "senhor".
 
-## Running the App
+The legacy Tkinter app (`app/`, `aris.py`) was fully ported into `backend/` and removed; its
+HUD design tokens live in [docs/design/hud-tokens.md](docs/design/hud-tokens.md).
+
+Roadmap (see [docs/superpowers/specs/](docs/superpowers/specs/)): Fase 0 núcleo ✓ · Plano 2 skills+voz ✓ ·
+**Plano 3 frontend React** (next) · then intelligence / environment / vision phases.
+
+## Running
+
+Backend (requires `uv` — the only dependency manager; single source of truth is
+`backend/pyproject.toml` + `backend/uv.lock`, no `requirements.txt`):
 
 ```bash
-# Activate venv first (Windows)
-venv\Scripts\activate
-
-# Run
-python aris.py
+cd backend
+uv sync                                                      # install/update backend/.venv from the lockfile
+uv run uvicorn aris.api.gateway:app --port 8000              # WebSocket at ws://127.0.0.1:8000/ws
+uv run pytest -q                                             # tests
+uv run ruff check . && uv run black --check . && uv run mypy aris   # lint + types
+uv add <pkg>                                                 # add a dependency (commit pyproject + uv.lock)
 ```
 
-There are no automated tests and no build step.
+> `uv` is installed at `%APPDATA%\Python\Python313\Scripts\uv.exe` and may not be on PATH yet.
 
 ## Environment Variables
 
-Copy `.env` (not committed) to the repo root. All settings live in [app/config.py](app/config.py):
+A single `.env` lives at the **repo root** (git-ignored, holds secrets). `config.py` reads it via
+`ROOT_DIR / ".env"`; settings are typed with pydantic-settings in
+[backend/aris/config.py](backend/aris/config.py).
 
 | Variable | Required | Purpose |
 |---|---|---|
-| `GEMINI_KEY` | Yes | Google Gemini 2.0 Flash (AI fallback for all unrecognised commands) |
-| `OPENWEATHER_KEY` | Yes | Current weather and forecast |
-| `CIDADE_PADRAO` | No | Default city for startup weather greeting (default: São Paulo) |
-| `TTS_ENGINE` | No | `edge` (default) or `pyttsx3` |
-| `EDGE_TTS_VOICE` | No | e.g. `pt-BR-AntonioNeural` |
-| `WORD_PATH` | No | Absolute path to `WINWORD.EXE` if auto-detection fails |
-| `YOUTUBE_VOLUME_APPS` | No | Comma-separated browser process names for per-app volume |
-| `PLAYLIST_MUSICA/ESTUDO/TREINO` | No | YouTube URLs for the three built-in playlists |
+| `GEMINI_KEY` | for Gemini | Google AI Studio API key (LLM fallback for unmatched commands) |
+| `OPENWEATHER_KEY` | for weather | Current weather + forecast |
+| `ARIS_LLM_PROVIDER` | No | `gemini` (default) or `ollama` (local, free) |
+| `GEMINI_MODEL` | No | default `gemini-2.5-flash` |
+| `OLLAMA_BASE_URL` / `OLLAMA_MODEL` | No | local model when provider=ollama |
+| `CIDADE_PADRAO` | No | default city for weather (São Paulo) |
+| `IDIOMA_STT` | No | STT language (default `pt-BR`) |
+| `TTS_ENGINE` / `EDGE_TTS_VOICE` / `EDGE_TTS_*` | No | TTS backend, voice, rate/pitch/volume, echo |
+| `WORD_PATH`, `INSTAGRAM_HANDLE`, `FACEBOOK_PROFILE` | No | app-launching helpers |
+| `YOUTUBE_VOLUME_APPS` | No | browser process names for per-app volume |
+| `PLAYLIST_MUSICA/ESTUDO/TREINO` | No | YouTube playlist URLs |
 
-## Architecture
+## Architecture (`backend/aris/`)
 
 ```
-aris.py              ← entry point, calls app.main.main()
-app/
-  config.py          ← all env-var loading; Config.validar() called at startup
-  logging_setup.py   ← loguru: INFO to stderr, DEBUG to data/logs/aris_<date>.log
-  main.py            ← wires Config → Gemini → Tkinter root → ArisApp
-
-  ui/app.py          ← ArisApp (Tkinter); owns the main thread; spawns one daemon
-                        thread for the voice loop (executar_assistente)
-  core/
-    command_processor.py  ← CommandProcessor; pure keyword matching (no regex);
-                             falls back to GeminiService for unrecognised input
-  managers/
-    memory.py        ← MemoryManager; circular deque (max 20 items); persists to
-                        data/memoria.json; thread-safe; disabled in private mode
-    notes.py         ← NotesManager; appends timestamped lines to data/notas_aris.txt
-  services/
-    gemini.py        ← GeminiService; single chat session per app launch;
-                        model: gemini-2.0-flash-exp; max ~40 words per reply
-    weather.py       ← WeatherService; OpenWeather v2.5 (Kelvin → Celsius)
-    music.py         ← MusicService; opens YouTube playlist URLs in default browser
-    volume.py        ← VolumeService; Windows-only; tries pycaw Core Audio first,
-                        falls back to winmm waveOut; per-app YouTube volume via pycaw
-    tts.py           ← EdgeTTS; async edge-tts → MP3 → MCI (Windows) or playsound
-  utils/
-    dates.py         ← format_date_pt_br(); Portuguese month names
+config.py            ← pydantic-settings; reads the single root .env
+assistant.py         ← AssistantEngine + build_engine() (composition root: registers skills)
+core/
+  context.py         ← Context: per-interaction state + speak/listen callbacks
+  skill.py           ← Skill (Protocol): matches() / handle()
+  registry.py        ← Registry: ordered skills; first match wins (replaces the if/elif chain)
+  orchestrator.py    ← routes a command to a skill, else to the LLM (with memory injected)
+llm/
+  base.py            ← PERSONA + build_prompt + LLMProvider (Protocol)
+  gemini_provider.py ← Google Gemini (legacy SDK; deprecation silenced in tests)
+  ollama_provider.py ← local model via http://localhost:11434
+  factory.py         ← build_provider() picks gemini|ollama from settings
+memory/
+  short_term.py      ← ShortTermMemory: deque persisted to JSON; as_prompt_context() feeds the LLM
+services/            ← external/OS wrappers: weather.py (OpenWeather), volume.py (winmm + optional pycaw)
+skills/              ← one skill per file: datetime, weather, playlists, notes, memory_skill, apps, volume
+voice/
+  stt.py             ← SpeechToText (Protocol) + GoogleSTT (SpeechRecognition, PT-BR)
+  tts.py             ← TextToSpeech (Protocol) + EdgeTTS (MCI + optional echo) + Pyttsx3TTS + build_tts()
+  loop.py            ← VoiceLoop: always-active loop in a daemon thread, emits events
+api/
+  gateway.py         ← FastAPI WebSocket: command_text / start_voice / stop_voice; broadcasts voice events
+  events.py          ← pydantic event schemas
+utils/dates.py       ← format_date_pt_br()
+main.py              ← uvicorn entrypoint
 ```
 
 ### Key design decisions
 
-- **Single daemon thread**: the entire voice loop (TTS + STT + command processing) runs in one background thread; all UI updates go through `root.after()` or direct widget calls (Tkinter is not thread-safe but the app avoids concurrent widget writes).
-- **Command matching is positional/substring**: `CommandProcessor.processar()` uses `in` checks on lowercased, unicode-normalised text; order of checks matters — more specific patterns come first.
-- **TTS fallback chain**: EdgeTTS (requires internet) → pyttsx3 (offline). If `edge_tts.is_ready()` returns False at startup, the app switches to pyttsx3 for the session.
-- **Wake word modes**: `always_active=True` (default) processes every utterance as a command. When False, the wake word "Aris"/"Aries" must precede commands.
-- **Private mode**: set via voice command; suppresses both `MemoryManager` and `NotesManager` writes for the session.
+- **Headless core, clients over WebSocket**: the engine never depends on a UI. The React HUD,
+  the voice loop, and future clients all talk to `api/gateway.py`. Voice events
+  (`state` / `user_said` / `aris_said`) are broadcast to every connected client.
+- **Skill registry, not if/elif**: add a capability = new file in `skills/` implementing the
+  `Skill` protocol, registered in `build_engine()`. Registration order = priority. Anything no
+  skill matches falls through to the LLM.
+- **Swappable LLM**: `ARIS_LLM_PROVIDER` selects Gemini (cloud) or Ollama (local) — one `.env` line.
+- **Memory feeds the prompt**: `ShortTermMemory.as_prompt_context()` is injected by the
+  Orchestrator (the old app persisted memory but never reused it).
+- **Voice loop in a thread**: `VoiceLoop` runs blocking STT/TTS in a daemon thread and bridges
+  events to the async WebSocket via `run_coroutine_threadsafe`. Interactive skills ("which city?")
+  work because the voice ctx provides real speak/listen.
+- **TTS fallback**: EdgeTTS (online, neural, optional echo) → pyttsx3 (offline).
 
 ## Data Files
 
-Runtime data is written to `data/` (auto-created):
-- `data/memoria.json` — conversation history (JSON, up to 20 entries)
-- `data/notas_aris.txt` — append-only notes log
-- `data/logs/aris_YYYY-MM-DD.log` — 7-day rolling debug log
-- `data/tts/` — temporary MP3 files (deleted after playback)
-
-## Backend headless (Fase 0+)
-
-The `backend/` directory holds the new decoupled core that is replacing the Tkinter monolith in `app/`. The brain (skills + LLM + memory) runs headless and any client (React HUD, voice, later vision) connects over WebSocket.
-
-- **Dependency manager:** `uv` (single source of truth: `backend/pyproject.toml` + `backend/uv.lock`). There is no `requirements.txt`.
-- **Setup:** `cd backend && uv sync` (creates/updates `backend/.venv` from the lockfile)
-- **Run:** `cd backend && uv run uvicorn aris.api.gateway:app --host 127.0.0.1 --port 8000` (WebSocket at `ws://127.0.0.1:8000/ws`)
-- **Tests:** `cd backend && uv run pytest -q`
-- **Lint/types:** `uv run ruff check . && uv run black --check . && uv run mypy aris`
-- **Add a dependency:** `uv add <pkg>` (runtime) or `uv add --dev <pkg>` (dev); commit the updated `pyproject.toml` + `uv.lock`.
-- **Composition root:** [backend/aris/assistant.py](backend/aris/assistant.py) `build_engine()` — register new skills here
-- **Add a skill:** create a file in `backend/aris/skills/` implementing the `Skill` protocol (`matches`/`handle`), then register it in `build_engine`. No more `if/elif`.
-- **LLM provider:** swap via `.env` — `ARIS_LLM_PROVIDER=gemini|ollama`. Gemini model via `GEMINI_MODEL` (default `gemini-2.5-flash`); Ollama via `OLLAMA_BASE_URL`/`OLLAMA_MODEL`.
-- **Single `.env`** lives at the repo root (git-ignored); `config.py` reads it via `ROOT_DIR / ".env"`.
-
-Architecture layers: `core/` (Context, Skill, Registry, Orchestrator) · `llm/` (provider trocável) · `memory/` (short_term, injected into the LLM prompt) · `skills/` · `api/` (WebSocket gateway). Migration of the remaining skills + voice (Plano 2) and the React frontend (Plano 3) build on this.
+Runtime data is written to `backend/data/` (git-ignored, auto-created): `memoria.json`
+(short-term memory), `notas_aris.txt` (notes), `tts/` (temporary MP3s, deleted after playback).
+The legacy `data/` at the repo root holds the old app's personal data and is kept but unused.
