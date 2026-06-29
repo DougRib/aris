@@ -32,9 +32,36 @@ class Settings(BaseSettings):
     # Localização
     cidade_padrao: str = "São Paulo"
 
-    # Memória
+    # Abrir apps / redes sociais
+    word_path: str = ""  # caminho do WINWORD.EXE, se a detecção automática falhar
+    instagram_handle: str = ""
+    facebook_profile: str = ""
+
+    # Volume por-app (navegadores onde o YouTube toca)
+    youtube_volume_apps: str = (
+        "msedge.exe,msedgewebview2.exe,chrome.exe,brave.exe,opera.exe,firefox.exe"
+    )
+
+    # Memória e notas
     max_memoria: int = 20
     arquivo_memoria: Path = BACKEND_DIR / "data" / "memoria.json"
+    arquivo_notas: Path = BACKEND_DIR / "data" / "notas_aris.txt"
+
+    # Playlists (YouTube) — abertas no navegador padrão
+    playlist_musica: str = (
+        "https://www.youtube.com/watch?v=RRzGr6m2Gh0&list=PLn9Vm_vd7552r94ALUQNsetqWwkDfIDLN"
+    )
+    playlist_estudo: str = "https://www.youtube.com/watch?v=Hs5C8x6Z6VQ"
+    playlist_treino: str = "https://www.youtube.com/watch?v=jfKfPfyJRdk"
+
+    @property
+    def playlists(self) -> dict[str, str]:
+        """Mapa nome→URL das playlists disponíveis."""
+        return {
+            "musica": self.playlist_musica,
+            "estudo": self.playlist_estudo,
+            "treino": self.playlist_treino,
+        }
 
 
 settings = Settings()

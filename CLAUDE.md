@@ -83,10 +83,12 @@ Runtime data is written to `data/` (auto-created):
 
 The `backend/` directory holds the new decoupled core that is replacing the Tkinter monolith in `app/`. The brain (skills + LLM + memory) runs headless and any client (React HUD, voice, later vision) connects over WebSocket.
 
-- **Run:** `cd backend && .venv/Scripts/python.exe -m uvicorn aris.api.gateway:app --host 127.0.0.1 --port 8000` (WebSocket at `ws://127.0.0.1:8000/ws`)
-- **Tests:** `cd backend && .venv/Scripts/python.exe -m pytest -q`
-- **Lint/types:** `ruff check . && black --check . && mypy aris`
-- **Venv:** `backend/.venv` (Python 3.13; deps in `backend/requirements.txt`)
+- **Dependency manager:** `uv` (single source of truth: `backend/pyproject.toml` + `backend/uv.lock`). There is no `requirements.txt`.
+- **Setup:** `cd backend && uv sync` (creates/updates `backend/.venv` from the lockfile)
+- **Run:** `cd backend && uv run uvicorn aris.api.gateway:app --host 127.0.0.1 --port 8000` (WebSocket at `ws://127.0.0.1:8000/ws`)
+- **Tests:** `cd backend && uv run pytest -q`
+- **Lint/types:** `uv run ruff check . && uv run black --check . && uv run mypy aris`
+- **Add a dependency:** `uv add <pkg>` (runtime) or `uv add --dev <pkg>` (dev); commit the updated `pyproject.toml` + `uv.lock`.
 - **Composition root:** [backend/aris/assistant.py](backend/aris/assistant.py) `build_engine()` — register new skills here
 - **Add a skill:** create a file in `backend/aris/skills/` implementing the `Skill` protocol (`matches`/`handle`), then register it in `build_engine`. No more `if/elif`.
 - **LLM provider:** swap via `.env` — `ARIS_LLM_PROVIDER=gemini|ollama`. Gemini model via `GEMINI_MODEL` (default `gemini-2.5-flash`); Ollama via `OLLAMA_BASE_URL`/`OLLAMA_MODEL`.

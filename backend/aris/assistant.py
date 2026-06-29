@@ -13,7 +13,15 @@ from aris.core.orchestrator import Orchestrator
 from aris.core.registry import Registry
 from aris.llm.factory import build_provider
 from aris.memory.short_term import ShortTermMemory
+from aris.services.volume import VolumeService
+from aris.services.weather import WeatherService
+from aris.skills.apps import AppsSkill
 from aris.skills.datetime_skill import DateTimeSkill
+from aris.skills.memory_skill import MemorySkill
+from aris.skills.notes import NotesSkill
+from aris.skills.playlists import PlaylistsSkill
+from aris.skills.volume import VolumeSkill
+from aris.skills.weather import WeatherSkill
 
 
 class AssistantEngine:
@@ -35,11 +43,19 @@ class AssistantEngine:
 
 def build_engine(settings: Settings) -> AssistantEngine:
     """Composition root: monta o motor com skills registradas por prioridade."""
+    memory = ShortTermMemory(max_items=settings.max_memoria, arquivo=settings.arquivo_memoria)
+
     registry = Registry()
     registry.register(DateTimeSkill())
-    # Plano 2 registra aqui: apps, volume, weather, playlists, notes, memory_skill.
+    registry.register(WeatherSkill(WeatherService(settings.openweather_key), settings.cidade_padrao))
+    registry.register(PlaylistsSkill(settings.playlists))
+    registry.register(NotesSkill(settings.arquivo_notas))
+    registry.register(MemorySkill(memory))
+    registry.register(
+        AppsSkill(settings.word_path, settings.instagram_handle, settings.facebook_profile)
+    )
+    registry.register(VolumeSkill(VolumeService(settings.youtube_volume_apps)))
 
-    memory = ShortTermMemory(max_items=settings.max_memoria, arquivo=settings.arquivo_memoria)
     llm = build_provider(settings)
     orchestrator = Orchestrator(registry, llm, memory)
     logger.info(f"AssistantEngine pronto (LLM: {settings.aris_llm_provider})")
