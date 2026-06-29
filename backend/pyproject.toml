@@ -21,6 +21,7 @@ target-version = "py311"
 
 [tool.black]
 line-length = 100
+target-version = ["py311"]
 
 [tool.mypy]
 python_version = "3.11"
@@ -29,3 +30,8 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+filterwarnings = [
+    # google.generativeai (legado) emite FutureWarning de deprecação no import.
+    # Mantido na Fase 0 por paridade; silenciado para a saída dos testes ficar limpa.
+    "ignore:(?s).*google.generativeai.*:FutureWarning",
+]

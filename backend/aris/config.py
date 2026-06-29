@@ -25,6 +25,7 @@ class Settings(BaseSettings):
 
     # Motor de raciocínio (LLM)
     aris_llm_provider: str = "gemini"  # "gemini" | "ollama"
+    gemini_model: str = "gemini-2.5-flash"  # model id do Gemini (ver genai.list_models)
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "llama3.1"
 

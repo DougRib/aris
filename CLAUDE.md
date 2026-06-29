@@ -78,3 +78,18 @@ Runtime data is written to `data/` (auto-created):
 - `data/notas_aris.txt` — append-only notes log
 - `data/logs/aris_YYYY-MM-DD.log` — 7-day rolling debug log
 - `data/tts/` — temporary MP3 files (deleted after playback)
+
+## Backend headless (Fase 0+)
+
+The `backend/` directory holds the new decoupled core that is replacing the Tkinter monolith in `app/`. The brain (skills + LLM + memory) runs headless and any client (React HUD, voice, later vision) connects over WebSocket.
+
+- **Run:** `cd backend && .venv/Scripts/python.exe -m uvicorn aris.api.gateway:app --host 127.0.0.1 --port 8000` (WebSocket at `ws://127.0.0.1:8000/ws`)
+- **Tests:** `cd backend && .venv/Scripts/python.exe -m pytest -q`
+- **Lint/types:** `ruff check . && black --check . && mypy aris`
+- **Venv:** `backend/.venv` (Python 3.13; deps in `backend/requirements.txt`)
+- **Composition root:** [backend/aris/assistant.py](backend/aris/assistant.py) `build_engine()` — register new skills here
+- **Add a skill:** create a file in `backend/aris/skills/` implementing the `Skill` protocol (`matches`/`handle`), then register it in `build_engine`. No more `if/elif`.
+- **LLM provider:** swap via `.env` — `ARIS_LLM_PROVIDER=gemini|ollama`. Gemini model via `GEMINI_MODEL` (default `gemini-2.5-flash`); Ollama via `OLLAMA_BASE_URL`/`OLLAMA_MODEL`.
+- **Single `.env`** lives at the repo root (git-ignored); `config.py` reads it via `ROOT_DIR / ".env"`.
+
+Architecture layers: `core/` (Context, Skill, Registry, Orchestrator) · `llm/` (provider trocável) · `memory/` (short_term, injected into the LLM prompt) · `skills/` · `api/` (WebSocket gateway). Migration of the remaining skills + voice (Plano 2) and the React frontend (Plano 3) build on this.
