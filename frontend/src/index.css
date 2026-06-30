@@ -1,20 +1,18 @@
 @import "tailwindcss";
 
-/* Design tokens do HUD (ver docs/design/hud-tokens.md) + acento violeta para o
-   gradiente futurista. No Tailwind v4 cada token vira utilitário. */
+/* Tokens do HUD + acentos do gradiente futurista (cyan → violeta → magenta). */
 @theme {
-  --color-bg: #05080f;
-  --color-panel: #0b1626;
+  --color-bg: #04060e;
+  --color-panel: #0a1322;
   --color-edge: #1b3a52;
   --color-primary: #2fd2ff;
   --color-primary-glow: #7be7ff;
   --color-violet: #8a5cff;
-  --color-content: #e6f2ef;
-  --color-muted: #8aa0b4;
+  --color-magenta: #d24dff;
+  --color-content: #eaf4ff;
+  --color-muted: #7e93ac;
   --color-danger: #ff5c5c;
-  --color-warning: #ffc857;
-  --color-success: #3dff9e;
-  --color-user-line: #9fe870;
+  --color-success: #34e89e;
 
   --font-display: "Segoe UI", system-ui, sans-serif;
   --font-mono: "Cascadia Code", ui-monospace, monospace;
@@ -30,27 +28,131 @@ body {
   margin: 0;
   color: var(--color-content);
   font-family: var(--font-display);
-  /* fundo com gradiente radial (centro azul-violeta) sobre quase-preto */
-  background:
-    radial-gradient(120% 90% at 50% 18%, #11203a 0%, #0a1322 42%, #05080f 100%);
+  background: radial-gradient(120% 80% at 50% 8%, #122448 0%, #0a1530 40%, #04060e 100%);
   overflow: hidden;
 }
 
-/* respiração suave do brilho de fundo */
-@keyframes aris-breathe {
-  0%,
-  100% {
-    opacity: 0.55;
-    transform: scale(1);
+/* ---- Texto holográfico (gradiente iridescente animado) ---- */
+.holo-text {
+  font-weight: 500;
+  letter-spacing: 0.18em;
+
+  background: linear-gradient(
+    90deg,
+    #25d0ff 0%,
+    #5a7cff 35%,
+    #9b6dff 70%,
+    #f06dff 100%
+  );
+
+  background-size: 300% auto;
+
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+
+  animation: holo-shift 8s linear infinite;
+
+  filter:
+    drop-shadow(0 0 8px rgba(37,208,255,.5))
+    drop-shadow(0 0 18px rgba(139,92,255,.3));
+}
+
+@keyframes holo-shift {
+  0% {
+    background-position: 0% center;
   }
-  50% {
-    opacity: 0.85;
-    transform: scale(1.06);
+
+  100% {
+    background-position: 300% center;
   }
 }
 
-@keyframes aris-spin {
-  to {
-    transform: rotate(360deg);
+.holo-text::after {
+  content: attr(data-text);
+
+  position: absolute;
+  inset: 0;
+
+  background: inherit;
+
+  -webkit-background-clip: text;
+  background-clip: text;
+
+  color: transparent;
+
+  filter: blur(18px);
+
+  opacity: 0.45;
+
+  z-index: -1;
+}
+
+/* ---- Borda/superfície com gradiente animado em tempo real ---- */
+.grad-anim {
+  background: linear-gradient(
+    130deg,
+    var(--color-primary),
+    var(--color-violet),
+    var(--color-magenta),
+    var(--color-primary)
+  );
+  background-size: 300% 300%;
+  animation: grad-move 9s ease infinite;
+}
+
+@keyframes grad-move {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* ---- Vidro (glassmorphism) + relevo suave (neumorphism) ---- */
+.glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(120, 200, 255, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 0 30px -24px var(--color-primary),
+    0 16px 40px -16px rgba(0, 0, 0, 0.7);
+}
+
+.neumorph {
+  box-shadow:
+    6px 6px 16px rgba(0, 0, 0, 0.55),
+    -5px -5px 14px rgba(40, 80, 130, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* ---- Animações do orb ---- */
+.orbit-ring {
+  position: absolute;
+  width: 240px;
+  height: 240px;
+  border-radius: 999px;
+  background: repeating-conic-gradient(
+    from 0deg,
+    #27dfff 0deg,
+    #27dfff 2deg,
+    transparent 3deg,
+    transparent 7deg
+  );
+  mask: radial-gradient(circle, transparent 100px, #000 102px, #000 116px, transparent 118px);
+  -webkit-mask: radial-gradient(circle, transparent 100px, #000 102px, #000 116px, transparent 118px);
+  opacity: 0.55;
+  animation: aris-rotate 22s linear infinite;
+}
+
+@keyframes aris-rotate {
+  0% {
+    transform: rotate(0deg);
   }
 }

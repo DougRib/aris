@@ -28,7 +28,7 @@ for ($i = 0; $i -lt 60; $i++) {
 if (-not $pronto) { Write-Host "A interface demorou a responder; abrindo mesmo assim." -ForegroundColor Yellow }
 
 Write-Host "Abrindo o ARIS em janela pequena..." -ForegroundColor Green
-$args = @("--app=http://localhost:5173", "--window-size=420,660", "--window-position=120,80")
+$args = @("--app=http://localhost:5173", "--window-size=470,960", "--window-position=120,40")
 try { Start-Process "msedge" -ArgumentList $args }
 catch {
   try { Start-Process "chrome" -ArgumentList $args }
