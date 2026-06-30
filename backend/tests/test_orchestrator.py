@@ -70,3 +70,23 @@ def test_excecao_de_skill_nao_propaga():
     orch = Orchestrator(reg, _FakeLLM(), _FakeMemory())
     out = orch.process("quebra isso", _ctx())
     assert "erro" in out.lower()
+
+
+class _FakeLong:
+    def recall(self, query: str, k: int = 3) -> list[str]:
+        return ["memoria-antiga-relevante"]
+
+
+class _FakeProfile:
+    def as_prompt_context(self) -> str:
+        return "perfil-do-usuario"
+
+
+def test_injeta_perfil_e_memoria_longa_no_prompt():
+    reg = Registry()
+    llm = _FakeLLM()
+    orch = Orchestrator(reg, llm, _FakeMemory(), long_term=_FakeLong(), profile=_FakeProfile())
+    out = orch.process("pergunta livre", _ctx())
+    assert out == "resposta-llm"
+    assert "memoria-antiga-relevante" in llm.last_prompt
+    assert "perfil-do-usuario" in llm.last_prompt

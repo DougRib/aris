@@ -1,72 +1,86 @@
-// HUD central: anel/arcos que refletem o estado do ARIS (ouvindo, processando,
-// falando…). Cor, velocidade de rotação dos arcos e pulso variam por estado.
+// Visualizador central reativo: um anel de barras que responde ao nível de
+// áudio (voz do usuário ao ouvir, ou animação ao falar) e um núcleo em
+// gradiente que pulsa. A cor e o rótulo refletem o modo atual do ARIS.
 import { useStore } from "../state/store";
-import type { VoiceState } from "../types";
+import type { Mode } from "../types";
 
-interface Visual {
-  label: string;
-  color: string;
-  spin: number; // segundos por volta (0 = parado)
-  pulse: boolean;
-}
+const SIZE = 300;
+const C = SIZE / 2;
+const R_INNER = 78;
+const BARS = 64;
 
-const VISUALS: Record<VoiceState, Visual> = {
-  disconnected: { label: "Desconectado", color: "var(--color-muted)", spin: 0, pulse: false },
-  idle: { label: "Online", color: "var(--color-primary)", spin: 22, pulse: false },
-  listening: { label: "Ouvindo…", color: "var(--color-warning)", spin: 12, pulse: true },
-  processing: { label: "Processando…", color: "var(--color-primary-glow)", spin: 5, pulse: false },
-  speaking: { label: "Falando…", color: "var(--color-primary)", spin: 8, pulse: true },
-  starting: { label: "Iniciando voz…", color: "var(--color-primary-glow)", spin: 8, pulse: false },
-  stopped: { label: "Voz parada", color: "var(--color-muted)", spin: 0, pulse: false },
-  voice_unavailable: { label: "Voz indisponível", color: "var(--color-danger)", spin: 0, pulse: false },
+const MODE_INFO: Record<Mode, { label: string; color: string }> = {
+  disconnected: { label: "Desconectado", color: "var(--color-muted)" },
+  idle: { label: "Pronto", color: "var(--color-primary)" },
+  listening: { label: "Ouvindo", color: "var(--color-success)" },
+  processing: { label: "Processando", color: "var(--color-violet)" },
+  speaking: { label: "Falando", color: "var(--color-primary-glow)" },
 };
 
-const TICKS = Array.from({ length: 12 }, (_, i) => i * 30);
-
 export function Hud() {
-  const voiceState = useStore((s) => s.voiceState);
-  const v = VISUALS[voiceState];
-  const spinStyle = v.spin ? { animation: `aris-spin ${v.spin}s linear infinite`, transformOrigin: "center" } : undefined;
-  const pulseStyle = v.pulse
-    ? { animation: "aris-pulse 1.4s ease-in-out infinite", transformBox: "fill-box" as const, transformOrigin: "center" }
-    : undefined;
+  const level = useStore((s) => s.level);
+  const mode = useStore((s) => s.mode);
+  const info = MODE_INFO[mode];
+
+  const t = performance.now() / 220;
+  const bars = Array.from({ length: BARS }, (_, i) => {
+    const ang = (i / BARS) * Math.PI * 2 - Math.PI / 2;
+    const phase = Math.sin(i * 0.8 + t) * 0.5 + 0.5; // ondulação por barra
+    const amp = (5 + level * 52) * (0.3 + 0.7 * phase);
+    const r2 = R_INNER + amp;
+    return {
+      x1: C + Math.cos(ang) * R_INNER,
+      y1: C + Math.sin(ang) * R_INNER,
+      x2: C + Math.cos(ang) * r2,
+      y2: C + Math.sin(ang) * r2,
+    };
+  });
+
+  const coreScale = 1 + level * 0.18;
 
   return (
-    <div className="flex flex-col items-center gap-3">
-      <svg width="240" height="240" viewBox="0 0 240 240">
-        {/* anel de brilho externo */}
-        <circle cx="120" cy="120" r="112" fill="none" stroke={v.color} strokeOpacity="0.25" strokeWidth="1" />
+    <div className="relative flex flex-col items-center">
+      <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
+        <defs>
+          <linearGradient id="barGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="var(--color-primary)" />
+            <stop offset="100%" stopColor="var(--color-violet)" />
+          </linearGradient>
+          <radialGradient id="coreGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="var(--color-primary-glow)" stopOpacity="0.95" />
+            <stop offset="55%" stopColor="var(--color-primary)" stopOpacity="0.35" />
+            <stop offset="100%" stopColor="var(--color-violet)" stopOpacity="0.05" />
+          </radialGradient>
+        </defs>
 
-        {/* arcos rotativos */}
-        <g style={spinStyle}>
-          <circle cx="120" cy="120" r="100" fill="none" stroke={v.color} strokeOpacity="0.8" strokeWidth="2" strokeDasharray="70 320" strokeLinecap="round" />
-          <circle cx="120" cy="120" r="100" fill="none" stroke={v.color} strokeOpacity="0.5" strokeWidth="2" strokeDasharray="40 200" strokeDashoffset="180" strokeLinecap="round" />
-        </g>
+        {/* halo externo */}
+        <circle cx={C} cy={C} r={R_INNER + 64} fill="none" stroke={info.color} strokeOpacity="0.12" strokeWidth="1" />
+        <circle cx={C} cy={C} r={R_INNER - 6} fill="none" stroke={info.color} strokeOpacity="0.25" strokeWidth="1" />
 
-        {/* ticks ao redor */}
-        {TICKS.map((deg) => {
-          const rad = (deg * Math.PI) / 180;
-          const x1 = 120 + Math.cos(rad) * 84;
-          const y1 = 120 + Math.sin(rad) * 84;
-          const x2 = 120 + Math.cos(rad) * 92;
-          const y2 = 120 + Math.sin(rad) * 92;
-          return <line key={deg} x1={x1} y1={y1} x2={x2} y2={y2} stroke={v.color} strokeOpacity="0.4" strokeWidth="1" />;
-        })}
+        {/* núcleo em gradiente, pulsando com o nível */}
+        <circle
+          cx={C}
+          cy={C}
+          r={R_INNER - 10}
+          fill="url(#coreGrad)"
+          style={{ transformOrigin: "center", transform: `scale(${coreScale})`, transition: "transform 60ms linear" }}
+        />
 
-        {/* anel principal + núcleo (pulsa ao falar) */}
-        <g style={pulseStyle}>
-          <circle cx="120" cy="120" r="78" fill="none" stroke={v.color} strokeWidth="3" />
-          <circle cx="120" cy="120" r="52" fill="var(--color-neon-core)" stroke={v.color} strokeOpacity="0.5" strokeWidth="1" />
+        {/* barras reativas */}
+        <g stroke="url(#barGrad)" strokeWidth="3" strokeLinecap="round">
+          {bars.map((b, i) => (
+            <line key={i} x1={b.x1} y1={b.y1} x2={b.x2} y2={b.y2} />
+          ))}
         </g>
 
         {/* marca central */}
-        <text x="120" y="128" textAnchor="middle" fill={v.color} fontSize="22" fontFamily="var(--font-display)" fontWeight="700" letterSpacing="2">
+        <text x={C} y={C + 7} textAnchor="middle" fill="var(--color-content)" fontSize="20" fontWeight="700" letterSpacing="3">
           ÁRIS
         </text>
       </svg>
 
-      <div className="text-sm font-semibold tracking-wide" style={{ color: v.color }}>
-        {v.label}
+      <div className="mt-1 text-sm font-semibold tracking-[0.2em] uppercase" style={{ color: info.color }}>
+        {info.label}
       </div>
     </div>
   );

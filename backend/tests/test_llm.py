@@ -21,6 +21,15 @@ def test_build_prompt_omite_memoria_quando_vazia():
     assert "Histórico" not in prompt
 
 
+def test_build_prompt_inclui_perfil_e_memorias_relevantes():
+    prompt = build_prompt(
+        "PERSONA", "hist", "pergunta", profile_context="perfil-x", recall_context="recall-y"
+    )
+    assert "perfil-x" in prompt
+    assert "recall-y" in prompt
+    assert "hist" in prompt
+
+
 def test_ollama_generate(monkeypatch):
     class _FakeResp:
         def raise_for_status(self):

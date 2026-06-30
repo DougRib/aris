@@ -1,20 +1,16 @@
 @import "tailwindcss";
 
-/* Design tokens do HUD (ver docs/design/hud-tokens.md). No Tailwind v4 cada
-   token vira utilitário: bg-bg, text-primary, border-edge, etc. */
+/* Design tokens do HUD (ver docs/design/hud-tokens.md) + acento violeta para o
+   gradiente futurista. No Tailwind v4 cada token vira utilitário. */
 @theme {
-  --color-bg: #07121b;
-  --color-panel: #0b1d2a;
-  --color-panel-inner: #0a1724;
-  --color-edge: #123243;
-  --color-grid: #0c2333;
-  --color-trace: #143a55;
-  --color-trace-dim: #0d2a3d;
-  --color-neon-core: #06121d;
+  --color-bg: #05080f;
+  --color-panel: #0b1626;
+  --color-edge: #1b3a52;
   --color-primary: #2fd2ff;
   --color-primary-glow: #7be7ff;
+  --color-violet: #8a5cff;
   --color-content: #e6f2ef;
-  --color-muted: #91a6b8;
+  --color-muted: #8aa0b4;
   --color-danger: #ff5c5c;
   --color-warning: #ffc857;
   --color-success: #3dff9e;
@@ -32,25 +28,27 @@ body,
 
 body {
   margin: 0;
-  background: var(--color-bg);
   color: var(--color-content);
   font-family: var(--font-display);
+  /* fundo com gradiente radial (centro azul-violeta) sobre quase-preto */
+  background:
+    radial-gradient(120% 90% at 50% 18%, #11203a 0%, #0a1322 42%, #05080f 100%);
+  overflow: hidden;
 }
 
-/* Anel pulsante quando o ARIS fala */
-@keyframes aris-pulse {
+/* respiração suave do brilho de fundo */
+@keyframes aris-breathe {
   0%,
   100% {
+    opacity: 0.55;
     transform: scale(1);
-    opacity: 0.85;
   }
   50% {
-    transform: scale(1.07);
-    opacity: 1;
+    opacity: 0.85;
+    transform: scale(1.06);
   }
 }
 
-/* Rotação dos arcos */
 @keyframes aris-spin {
   to {
     transform: rotate(360deg);

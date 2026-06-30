@@ -1,39 +1,38 @@
-// Tela principal do ARIS: HUD central, histórico e controles, sobre um fundo
-// com grid sci-fi. Estabelece a conexão WebSocket via useAris().
+// Tela do ARIS: um painel compacto, glassmorfismo sobre fundo em gradiente.
+// Interface só-voz: HUD reativo + botão de microfone + transcrição.
 import { useAris } from "./hooks/useAris";
 import { useStore } from "./state/store";
 import { Hud } from "./components/Hud";
-import { Log } from "./components/Log";
-import { Controls } from "./components/Controls";
-
-const GRID_BG = {
-  backgroundImage:
-    "linear-gradient(var(--color-grid) 1px, transparent 1px), linear-gradient(90deg, var(--color-grid) 1px, transparent 1px)",
-  backgroundSize: "44px 44px",
-};
+import { MicButton } from "./components/MicButton";
+import { Transcript } from "./components/Transcript";
 
 export default function App() {
-  const { sendText, startVoice, stopVoice } = useAris();
+  const { toggleMic } = useAris();
   const connected = useStore((s) => s.connected);
 
   return (
-    <div className="min-h-full w-full" style={GRID_BG}>
-      <div className="mx-auto flex min-h-full max-w-2xl flex-col items-center gap-6 px-4 py-8">
-        <header className="flex flex-col items-center gap-1">
-          <h1 className="text-2xl font-bold tracking-[0.25em] text-primary">ARIS</h1>
-          <p className="text-sm text-muted">Assistente Pessoal • Comando por Voz</p>
-          <div className="mt-1 flex items-center gap-2 text-xs">
-            <span
-              className="inline-block h-2 w-2 rounded-full"
-              style={{ background: connected ? "var(--color-success)" : "var(--color-danger)" }}
-            />
-            <span className="text-muted">{connected ? "Conectado ao núcleo" : "Conectando…"}</span>
+    <div className="flex h-full w-full items-center justify-center p-4">
+      <div
+        className="flex w-[380px] max-w-full flex-col items-center gap-5 rounded-[28px] border border-edge/60 bg-panel/35 px-6 py-7 backdrop-blur-xl"
+        style={{ boxShadow: "0 0 80px -28px var(--color-primary), inset 0 0 40px -30px var(--color-violet)" }}
+      >
+        <header className="flex w-full items-center justify-between">
+          <div>
+            <h1 className="text-lg font-bold tracking-[0.4em] text-primary">ARIS</h1>
+            <p className="text-[11px] tracking-wide text-muted">assistente por voz</p>
           </div>
+          <span
+            className="inline-block h-2.5 w-2.5 rounded-full"
+            style={{
+              background: connected ? "var(--color-success)" : "var(--color-danger)",
+              boxShadow: connected ? "0 0 10px var(--color-success)" : "none",
+            }}
+          />
         </header>
 
         <Hud />
-        <Log />
-        <Controls onSend={sendText} onStartVoice={startVoice} onStopVoice={stopVoice} />
+        <MicButton onToggle={toggleMic} />
+        <Transcript />
       </div>
     </div>
   );

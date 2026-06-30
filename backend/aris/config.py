@@ -62,6 +62,12 @@ class Settings(BaseSettings):
     arquivo_memoria: Path = BACKEND_DIR / "data" / "memoria.json"
     arquivo_notas: Path = BACKEND_DIR / "data" / "notas_aris.txt"
 
+    # Memória vetorial (longo prazo) + perfil do usuário
+    chroma_dir: Path = BACKEND_DIR / "data" / "chroma"
+    profile_file: Path = BACKEND_DIR / "data" / "profile.json"
+    ollama_embed_model: str = "nomic-embed-text"
+    recall_k: int = 3  # nº de memórias relevantes recuperadas por consulta
+
     # Playlists (YouTube) — abertas no navegador padrão
     playlist_musica: str = (
         "https://www.youtube.com/watch?v=RRzGr6m2Gh0&list=PLn9Vm_vd7552r94ALUQNsetqWwkDfIDLN"

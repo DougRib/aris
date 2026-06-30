@@ -25,9 +25,19 @@ class LLMProvider(Protocol):
         ...
 
 
-def build_prompt(persona: str, memory_context: str, question: str) -> str:
-    """Monta o prompt final: persona + (histórico, se houver) + pergunta."""
+def build_prompt(
+    persona: str,
+    memory_context: str,
+    question: str,
+    profile_context: str = "",
+    recall_context: str = "",
+) -> str:
+    """Monta o prompt: persona + perfil + memórias relevantes + histórico + pergunta."""
     parts = [persona]
+    if profile_context:
+        parts.append(f"Sobre o usuário:\n{profile_context}")
+    if recall_context:
+        parts.append(f"Memórias relevantes:\n{recall_context}")
     if memory_context:
         parts.append(f"Histórico recente:\n{memory_context}")
     parts.append(f"Pergunta: {question}")

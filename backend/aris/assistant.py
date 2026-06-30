@@ -12,6 +12,8 @@ from aris.core.context import Context
 from aris.core.orchestrator import Orchestrator
 from aris.core.registry import Registry
 from aris.llm.factory import build_provider
+from aris.memory.long_term import LongTermMemory, build_long_term
+from aris.memory.profile import UserProfile
 from aris.memory.short_term import ShortTermMemory
 from aris.services.volume import VolumeService
 from aris.services.weather import WeatherService
@@ -20,6 +22,7 @@ from aris.skills.datetime_skill import DateTimeSkill
 from aris.skills.memory_skill import MemorySkill
 from aris.skills.notes import NotesSkill
 from aris.skills.playlists import PlaylistsSkill
+from aris.skills.profile_skill import ProfileSkill
 from aris.skills.volume import VolumeSkill
 from aris.skills.weather import WeatherSkill
 
@@ -27,15 +30,24 @@ from aris.skills.weather import WeatherSkill
 class AssistantEngine:
     """Motor headless: recebe texto, processa e devolve a resposta do ARIS."""
 
-    def __init__(self, orchestrator: Orchestrator, memory: ShortTermMemory) -> None:
+    def __init__(
+        self,
+        orchestrator: Orchestrator,
+        memory: ShortTermMemory,
+        long_term: LongTermMemory | None = None,
+    ) -> None:
         self._orchestrator = orchestrator
         self.memory = memory
+        self._long_term = long_term
 
     def process(self, text: str, ctx: Context) -> str:
         """Processa um comando com um contexto dado (voz fornece speak/listen reais)."""
         ctx.private_mode = self.memory.private_mode
         resposta = self._orchestrator.process(text, ctx)
         self.memory.registrar(text, resposta)
+        # Memória de longo prazo (episódica), exceto em modo privado.
+        if self._long_term is not None and not self.memory.private_mode:
+            self._long_term.remember(f"Usuário: {text} | ÁRIS: {resposta}")
         return resposta
 
     def handle_text(self, text: str) -> str:
@@ -47,6 +59,8 @@ class AssistantEngine:
 def build_engine(settings: Settings) -> AssistantEngine:
     """Composition root: monta o motor com skills registradas por prioridade."""
     memory = ShortTermMemory(max_items=settings.max_memoria, arquivo=settings.arquivo_memoria)
+    long_term = build_long_term(settings)  # None se ChromaDB/Ollama indisponível
+    profile = UserProfile(settings.profile_file)
 
     registry = Registry()
     registry.register(DateTimeSkill())
@@ -54,12 +68,18 @@ def build_engine(settings: Settings) -> AssistantEngine:
     registry.register(PlaylistsSkill(settings.playlists))
     registry.register(NotesSkill(settings.arquivo_notas))
     registry.register(MemorySkill(memory))
+    registry.register(ProfileSkill(profile))
     registry.register(
         AppsSkill(settings.word_path, settings.instagram_handle, settings.facebook_profile)
     )
     registry.register(VolumeSkill(VolumeService(settings.youtube_volume_apps)))
 
     llm = build_provider(settings)
-    orchestrator = Orchestrator(registry, llm, memory)
-    logger.info(f"AssistantEngine pronto (LLM: {settings.aris_llm_provider})")
-    return AssistantEngine(orchestrator, memory)
+    orchestrator = Orchestrator(
+        registry, llm, memory, long_term=long_term, profile=profile, recall_k=settings.recall_k
+    )
+    logger.info(
+        f"AssistantEngine pronto (LLM: {settings.aris_llm_provider}, "
+        f"memória longa: {'on' if long_term else 'off'})"
+    )
+    return AssistantEngine(orchestrator, memory, long_term=long_term)
