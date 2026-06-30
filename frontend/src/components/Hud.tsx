@@ -47,15 +47,43 @@ export function Hud() {
             <stop offset="100%" stopColor="var(--color-violet)" />
           </linearGradient>
           <radialGradient id="coreGrad" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="var(--color-primary-glow)" stopOpacity="0.95" />
-            <stop offset="55%" stopColor="var(--color-primary)" stopOpacity="0.35" />
-            <stop offset="100%" stopColor="var(--color-violet)" stopOpacity="0.05" />
+            <stop
+              offset="0%"
+              stopColor="var(--color-primary-glow)"
+              stopOpacity="0.95"
+            />
+            <stop
+              offset="55%"
+              stopColor="var(--color-primary)"
+              stopOpacity="0.35"
+            />
+            <stop
+              offset="100%"
+              stopColor="var(--color-violet)"
+              stopOpacity="0.05"
+            />
           </radialGradient>
         </defs>
 
         {/* halo externo */}
-        <circle cx={C} cy={C} r={R_INNER + 64} fill="none" stroke={info.color} strokeOpacity="0.12" strokeWidth="1" />
-        <circle cx={C} cy={C} r={R_INNER - 6} fill="none" stroke={info.color} strokeOpacity="0.25" strokeWidth="1" />
+        <circle
+          cx={C}
+          cy={C}
+          r={R_INNER + 64}
+          fill="none"
+          stroke={info.color}
+          strokeOpacity="0.12"
+          strokeWidth="1"
+        />
+        <circle
+          cx={C}
+          cy={C}
+          r={R_INNER - 6}
+          fill="none"
+          stroke={info.color}
+          strokeOpacity="0.25"
+          strokeWidth="1"
+        />
 
         {/* núcleo em gradiente, pulsando com o nível */}
         <circle
@@ -63,7 +91,11 @@ export function Hud() {
           cy={C}
           r={R_INNER - 10}
           fill="url(#coreGrad)"
-          style={{ transformOrigin: "center", transform: `scale(${coreScale})`, transition: "transform 60ms linear" }}
+          style={{
+            transformOrigin: "center",
+            transform: `scale(${coreScale})`,
+            transition: "transform 60ms linear",
+          }}
         />
 
         {/* barras reativas */}
@@ -74,12 +106,23 @@ export function Hud() {
         </g>
 
         {/* marca central */}
-        <text x={C} y={C + 7} textAnchor="middle" fill="var(--color-content)" fontSize="20" fontWeight="700" letterSpacing="3">
+        <text
+          x={C}
+          y={C + 7}
+          textAnchor="middle"
+          fill="var(--color-content)"
+          fontSize="20"
+          fontWeight="700"
+          letterSpacing="3"
+        >
           ÁRIS
         </text>
       </svg>
 
-      <div className="mt-1 text-sm font-semibold tracking-[0.2em] uppercase" style={{ color: info.color }}>
+      <div
+        className="mt-1 text-sm font-semibold tracking-[0.2em] uppercase"
+        style={{ color: info.color }}
+      >
         {info.label}
       </div>
     </div>

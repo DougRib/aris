@@ -23,7 +23,7 @@ export function MicButton({ onToggle }: { onToggle: () => void }) {
         type="button"
         onClick={onToggle}
         disabled={!connected || !supported}
-        className={`relative flex h-16 w-16 items-center justify-center rounded-full border-2 transition disabled:opacity-40 ${
+        className={`relative flex h-16 w-16 items-center cursor-pointer justify-center rounded-full border-2 transition disabled:opacity-40 ${
           micActive ? "border-success text-success" : "border-primary text-primary hover:bg-primary/10"
         }`}
         style={{
