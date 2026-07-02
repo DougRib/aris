@@ -28,12 +28,12 @@ function Globe() {
       {/* casca externa wireframe (cyan) */}
       <mesh>
         <icosahedronGeometry args={[1.3, 1]} />
-        <meshBasicMaterial color="#2fd2ff" wireframe transparent opacity={0.55} />
+        <meshBasicMaterial color="#2fd2ff" wireframe transparent opacity={0.18} />
       </mesh>
       {/* casca interna wireframe (violeta), gira ao contrário */}
       <mesh ref={interno}>
         <icosahedronGeometry args={[1.05, 2]} />
-        <meshBasicMaterial color="#8a5cff" wireframe transparent opacity={0.35} />
+        <meshBasicMaterial color="#8a5cff" wireframe transparent opacity={0.18} />
       </mesh>
       {/* núcleo translúcido para dar profundidade */}
       <mesh>

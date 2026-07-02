@@ -8,8 +8,6 @@ export default function ArisOrb() {
 
   return (
     <div className="relative w-[240px] h-[240px] flex items-center justify-center">
-      {/* círculo externo */}
-      <div className="absolute inset-[-60px] rounded-full border border-cyan-500/10" />
       {/* anel de spokes (index.css) */}
       <div className="absolute orbit-ring" />
       {/* glow reativo ao áudio */}
@@ -21,7 +19,7 @@ export default function ArisOrb() {
       <div className="relative w-[188px] h-[188px]">
         <ArisGlobe />
         <span
-          className="absolute inset-0 flex items-center justify-center text-3xl font-bold tracking-[6px] text-white pointer-events-none"
+          className="absolute inset-0 flex items-center justify-center text-3xl  tracking-[6px] text-white pointer-events-none"
           style={{ textShadow: "0 0 18px rgba(47,210,255,0.6)" }}
         >
           ÁRIS

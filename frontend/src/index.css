@@ -28,13 +28,19 @@ body {
   margin: 0;
   color: var(--color-content);
   font-family: var(--font-display);
-  background: radial-gradient(120% 80% at 50% 8%, #122448 0%, #0a1530 40%, #04060e 100%);
+  background: radial-gradient(
+    120% 80% at 50% 8%,
+    #122448 0%,
+    #0a1530 40%,
+    #04060e 100%
+  );
   overflow: hidden;
 }
 
 /* ---- Texto holográfico (gradiente iridescente animado) ---- */
 .holo-text {
   font-weight: 500;
+  font-family: "Audiowide", system-ui, sans-serif;
   letter-spacing: 0.18em;
 
   background: linear-gradient(
@@ -53,9 +59,8 @@ body {
 
   animation: holo-shift 8s linear infinite;
 
-  filter:
-    drop-shadow(0 0 8px rgba(37,208,255,.5))
-    drop-shadow(0 0 18px rgba(139,92,255,.3));
+  filter: drop-shadow(0 0 8px rgba(37, 208, 255, 0.5))
+    drop-shadow(0 0 18px rgba(139, 92, 255, 0.3));
 }
 
 @keyframes holo-shift {
@@ -90,13 +95,7 @@ body {
 
 /* ---- Borda/superfície com gradiente animado em tempo real ---- */
 .grad-anim {
-  background: linear-gradient(
-    130deg,
-    var(--color-primary),
-    var(--color-violet),
-    var(--color-magenta),
-    var(--color-primary)
-  );
+  background: linear-gradient(90deg, #25d0ff, #4f7dff, #8f5cff, #d95cff);
   background-size: 300% 300%;
   animation: grad-move 9s ease infinite;
 }
@@ -110,6 +109,117 @@ body {
   }
   100% {
     background-position: 0% 50%;
+  }
+}
+
+/* ---- Botão MIC  ---- */
+.mic-button {
+  position: relative;
+
+  width: 70px;
+  height: 70px;
+
+  border-radius: 999px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+
+  overflow: hidden;
+
+  background:
+    radial-gradient(
+      circle at 30% 30%,
+      rgba(255,255,255,.12),
+      transparent 45%
+    ),
+    rgba(5,15,35,.95);
+
+  border: 1px solid rgba(80,180,255,.25);
+
+  transition: all .35s ease;
+}
+
+.mic-button::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    rgba(37,208,255,.5),
+    rgba(139,92,255,.5),
+    rgba(255,92,255,.5)
+  );
+  z-index: -1;
+  filter: blur(14px);
+  opacity: .8;
+}
+
+.mic-button::after {
+  content: "";
+  position: absolute;
+  width: 110%;
+  height: 110%;
+  border-radius: inherit;
+  border: 1px solid rgba(37,208,255,.35);
+  animation: pulse-ring 3s infinite;
+}
+
+.mic-icon {
+  color: white;
+  filter:
+    drop-shadow(0 0 8px rgba(255,255,255,.7))
+    drop-shadow(0 0 16px rgba(37,208,255,.5));
+}
+
+.mic-button:hover {
+  transform: scale(1.05);
+}
+
+.mic-active {
+  box-shadow:
+    0 0 25px rgba(0,255,170,.5),
+    0 0 50px rgba(0,255,170,.25);
+}
+
+.mic-active::after {
+  border-color: rgba(0,255,170,.7);
+  animation:
+    pulse-ring 1.2s infinite,
+    listening-glow 2s infinite;
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(.95);
+    opacity: .9;
+  }
+
+  70% {
+    transform: scale(1.15);
+    opacity: 0;
+  }
+
+  100% {
+    transform: scale(1.15);
+    opacity: 0;
+  }
+}
+
+@keyframes listening-glow {
+  0% {
+    filter: blur(0px);
+  }
+
+  50% {
+    filter: blur(3px);
+  }
+
+  100% {
+    filter: blur(0px);
   }
 }
 
@@ -145,8 +255,20 @@ body {
     transparent 3deg,
     transparent 7deg
   );
-  mask: radial-gradient(circle, transparent 100px, #000 102px, #000 116px, transparent 118px);
-  -webkit-mask: radial-gradient(circle, transparent 100px, #000 102px, #000 116px, transparent 118px);
+  mask: radial-gradient(
+    circle,
+    transparent 100px,
+    #000 102px,
+    #000 116px,
+    transparent 118px
+  );
+  -webkit-mask: radial-gradient(
+    circle,
+    transparent 100px,
+    #000 102px,
+    #000 116px,
+    transparent 118px
+  );
   opacity: 0.55;
   animation: aris-rotate 22s linear infinite;
 }

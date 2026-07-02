@@ -27,7 +27,7 @@ export default function ArisAssistant() {
     <div className="min-h-screen flex justify-center items-center p-5">
       {/* moldura com gradiente animado em tempo real */}
       <div
-        className="grad-anim rounded-[42px] p-[2px]"
+        className="grad-anim rounded-[42px] p-[1.5px]"
         style={{ boxShadow: "0 0 90px -28px var(--color-violet), 0 0 44px -22px var(--color-primary)" }}
       >
         <div className="relative w-[400px] h-[800px] max-h-[96vh] rounded-[40px] overflow-hidden bg-[#050a16]">
@@ -47,7 +47,7 @@ export default function ArisAssistant() {
                 </div>
               </div>
 
-              <h3 className="mt-3 tracking-[7px] text-lg text-cyan-300">{LABEL[mode]}</h3>
+              <h3 className="mt-3 tracking-[7px] text-sm text-cyan-300">{LABEL[mode]}</h3>
 
               <VoiceButton onToggle={toggleMic} />
 
